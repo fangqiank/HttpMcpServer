@@ -1,6 +1,7 @@
 using HttpMcpServer.Tools;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using ModelContextProtocol.Authentication;
 using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -39,6 +40,18 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateLifetime = true,
             ClockSkew = TimeSpan.FromMinutes(5),
             IssuerSigningKeys = jwks.GetSigningKeys()
+        };
+    })
+    .AddMcp(options =>
+    {
+        // MCP OAuth 资源元数据发现端点
+        // 客户端收到 401 后会访问 /.well-known/oauth-protected-resource
+        // 自动发现 Auth0 为授权服务器并启动 OAuth 流程
+        options.ResourceMetadata = new ProtectedResourceMetadata
+        {
+            Resource = auth0Audience,
+            AuthorizationServers = [$"https://{auth0Domain}"],
+            ScopesSupported = ["openid", "profile", "email", "read:data", "write:data"]
         };
     });
 
@@ -103,7 +116,7 @@ app.Use(async (context, next) =>
         context.Response.StatusCode);
 });
 
-app.MapMcp("/mcp").RequireAuthorization();
+app.MapMcp("/mcp");
 app.MapHealthChecks("/health");
 
 app.Run();

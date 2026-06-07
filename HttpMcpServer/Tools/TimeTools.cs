@@ -9,7 +9,7 @@ namespace HttpMcpServer.Tools
     {
         [McpServerTool(Name = "get_current_time")]
         [Description("Get the current time for a timezone")]
-        [Authorize]
+        [AllowAnonymous]
         public static Task<string> GetCurrentTime(
         [Description("Timezone (e.g., 'UTC', 'America/New_York', 'Asia/Shanghai')")]
         string timezone = "UTC")
@@ -33,7 +33,7 @@ namespace HttpMcpServer.Tools
 
         [McpServerTool(Name = "list_timezones")]
         [Description("List available timezones matching a search string")]
-        [Authorize]
+        [AllowAnonymous]
         public static Task<string> ListTimezones(
             [Description("Search string to filter timezones")] string search = "")
         {

@@ -1,8 +1,8 @@
 # HttpMcpServer
 
-ASP.NET Core MCP (Model Context Protocol) 服务器 — 通过 StreamableHttp 传输协议暴露 AI 工具调用能力，使用 Auth0 JWT 保护端点。
+ASP.NET Core MCP (Model Context Protocol) 服务器 — 通过 StreamableHttp 传输协议暴露 AI 工具调用能力，使用 Auth0 JWT 保护敏感工具，支持 MCP OAuth 自动发现。
 
-An ASP.NET Core MCP server exposing AI tool-calling capabilities via StreamableHttp transport, protected with Auth0 JWT authentication.
+An ASP.NET Core MCP server with Auth0 JWT selective tool authorization and MCP OAuth auto-discovery.
 
 ![Architecture](HttpMcpServer-architecture.svg)
 
@@ -19,38 +19,43 @@ An ASP.NET Core MCP server exposing AI tool-calling capabilities via StreamableH
 
 ## Modules
 
-| Module | File | Responsibility |
-|---|---|---|
-| Host | `Program.cs` | Auth0 JWT validation, MCP server DI, middleware pipeline |
-| WeatherTools | `Tools/WeatherTools.cs` | Simulated weather data (get_weather, get_forecast) |
-| CalculatorTools | `Tools/CalculatorTools.cs` | Math expression evaluation, unit conversion |
-| TimeTools | `Tools/TimeTools.cs` | Timezone-aware time queries (get_current_time, list_timezones) |
-| DatabaseTools | `Tools/DatabaseTools.cs` | Document search with DI-injected logger/config |
+| Module | File | Auth | Responsibility |
+|---|---|---|---|
+| Host | `Program.cs` | — | Auth0 JWT + JWKS, MCP server DI, OAuth metadata, middleware |
+| WeatherTools | `Tools/WeatherTools.cs` | Public | Simulated weather data |
+| CalculatorTools | `Tools/CalculatorTools.cs` | Public | Math evaluation, unit conversion |
+| TimeTools | `Tools/TimeTools.cs` | Public | Timezone-aware time queries |
+| DatabaseTools | `Tools/DatabaseTools.cs` | **JWT Required** | Document search (DI-injected) |
 
-## Authentication Flow
+## Authorization Model
+
+MCP SDK `AddAuthorizationFilters()` provides per-tool access control:
+
+| Attribute | Behavior |
+|---|---|
+| `[AllowAnonymous]` | Tool visible and callable without authentication |
+| `[Authorize]` | Tool **hidden** from `tools/list` and **blocked** on call without valid JWT |
 
 ```
-Auth0 (OIDC Provider)
-  │
-  │ 1. Issues JWT access token (RS256 signed)
-  │
-  ▼
-MCP Client (Claude Desktop / Inspector)
-  │
-  │ 2. Sends Bearer token in Authorization header
-  │
-  ▼ POST /mcp
-┌──────────────────────────────────┐
-│ ASP.NET Core Middleware Pipeline  │
-│  CORS → JWT Auth → Authorization │
-├──────────────────────────────────┤
-│ MCP SDK (AddAuthorizationFilters)│
-│  [Authorize] on all tools        │
-├──────────────────────────────────┤
-│ MCP Tools                        │
-│  Weather / Calculator /          │
-│  Time / Database                 │
-└──────────────────────────────────┘
+No Token:              tools/list → get_weather, get_forecast, calculate,
+                                   convert_units, get_current_time, list_timezones
+                       (search_documents is hidden)
+
+With valid JWT:        tools/list → all 7 tools available
+```
+
+## OAuth Auto-Discovery
+
+The server exposes `/.well-known/oauth-protected-resource` for MCP-native OAuth flow:
+
+```
+1. MCP client connects → receives 401
+2. Discovers /.well-known/oauth-protected-resource
+3. Finds Auth0 as authorization server
+4. Initiates Authorization Code flow with PKCE
+5. User logs in via Auth0
+6. Client receives access token
+7. Subsequent requests include Bearer token
 ```
 
 ## Quick Start
@@ -61,14 +66,11 @@ dotnet build HttpMcpServer/HttpMcpServer.csproj
 
 # Run (defaults to http://localhost:5000)
 dotnet run --project HttpMcpServer/HttpMcpServer.csproj
-
-# Run with HTTPS profile
-dotnet run --project HttpMcpServer/HttpMcpServer.csproj --launch-profile https
 ```
 
 ## Configuration
 
-Create an API in [Auth0 Dashboard](https://manage.auth0.com/) and update `appsettings.json`:
+Update `appsettings.json` with your Auth0 settings:
 
 ```json
 {
@@ -79,55 +81,55 @@ Create an API in [Auth0 Dashboard](https://manage.auth0.com/) and update `appset
 }
 ```
 
-### Auth0 Setup Steps
+### Auth0 Setup
 
-1. **Auth0 Dashboard → Applications → APIs → Create API**
-   - Set Name and Identifier (Identifier = Audience)
-   - Signing Algorithm: RS256
-
+1. **Auth0 Dashboard → Applications → APIs → Create API** (sets Audience, RS256 signing)
 2. **Auth0 Dashboard → Applications → Applications → Create Application**
-   - Type: Machine to Machine (for testing)
-   - Authorize the API created above
+   - Type: Machine to Machine (for testing) or Native (for OAuth flow)
+   - Authorize the API
+3. **For OAuth auto-discovery**: Add `http://localhost:6274/oauth/callback` to Allowed Callback URLs
 
-3. **Get a test token**:
-   ```bash
-   curl --request POST \
-     --url https://your-tenant.us.auth0.com/oauth/token \
-     --header 'content-type: application/json' \
-     --data '{
-       "client_id": "<client-id>",
-       "client_secret": "<client-secret>",
-       "audience": "https://your-api-identifier",
-       "grant_type": "client_credentials"
-     }'
-   ```
+### Get a test token
+
+```bash
+curl --request POST \
+  --url https://your-tenant.us.auth0.com/oauth/token \
+  --header 'content-type: application/json' \
+  --data '{
+    "client_id": "<client-id>",
+    "client_secret": "<client-secret>",
+    "audience": "https://your-api-identifier",
+    "grant_type": "client_credentials"
+  }'
+```
 
 ## API Endpoints
 
-| Endpoint | Method | Auth | Description |
-|---|---|---|---|
-| `/mcp` | POST | Required | MCP StreamableHttp endpoint (JSON-RPC 2.0) |
-| `/health` | GET | None | Health check |
+| Endpoint | Auth | Description |
+|---|---|---|
+| `/mcp` | Per-tool | MCP StreamableHttp endpoint (JSON-RPC 2.0) |
+| `/health` | None | Health check |
+| `/.well-known/oauth-protected-resource` | None | OAuth resource metadata for auto-discovery |
 
 ## MCP Tools
 
-| Tool | Parameters | Description |
-|---|---|---|
-| `get_weather` | `city` (required), `units` (optional) | Get current weather for a city |
-| `get_forecast` | `city` (required) | Get 3-day weather forecast |
-| `calculate` | `expression` (required) | Evaluate a math expression |
-| `convert_units` | `value`, `from`, `to` (all required) | Convert between units (km/mi, kg/lb, C/F) |
-| `get_current_time` | `timezone` (optional, default: UTC) | Get current time for a timezone |
-| `list_timezones` | `search` (optional) | List available timezones |
-| `search_documents` | `query` (required), `limit` (optional) | Search document database |
+| Tool | Auth | Parameters | Description |
+|---|---|---|---|
+| `get_weather` | Public | `city`, `units?` | Get current weather |
+| `get_forecast` | Public | `city` | Get 3-day forecast |
+| `calculate` | Public | `expression` | Evaluate math expression |
+| `convert_units` | Public | `value`, `from`, `to` | Unit conversion |
+| `get_current_time` | Public | `timezone?` | Get time for timezone |
+| `list_timezones` | Public | `search?` | List available timezones |
+| `search_documents` | **JWT** | `query`, `limit?` | Search document database |
 
 ## Client Configuration
 
 ### MCP Inspector
 
-1. Transport Type: `Streamable HTTP`
+1. Transport: `Streamable HTTP`
 2. URL: `http://localhost:5000/mcp`
-3. Add custom header: `Authorization: Bearer <your-token>`
+3. For protected tools: Add header `Authorization: Bearer <token>`
 
 ### Claude Desktop (via mcp-remote)
 
@@ -151,16 +153,22 @@ claude mcp add http-tools-server --transport streamable-http http://localhost:50
 ## Example Request
 
 ```bash
+# Public tool - no token needed
+curl -X POST http://localhost:5000/mcp \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0", "id": "1",
+    "method": "tools/call",
+    "params": { "name": "get_weather", "arguments": { "city": "Shanghai" } }
+  }'
+
+# Protected tool - token required
 curl -X POST http://localhost:5000/mcp \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <your-access-token>" \
   -d '{
-    "jsonrpc": "2.0",
-    "id": "1",
+    "jsonrpc": "2.0", "id": "2",
     "method": "tools/call",
-    "params": {
-      "name": "get_weather",
-      "arguments": { "city": "Shanghai", "units": "celsius" }
-    }
+    "params": { "name": "search_documents", "arguments": { "query": "MCP protocol" } }
   }'
 ```

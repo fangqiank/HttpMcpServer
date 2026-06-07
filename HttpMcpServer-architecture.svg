@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 780" font-family="Segoe UI, Arial, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 800" font-family="Segoe UI, Arial, sans-serif">
   <defs>
     <marker id="arrow" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="10" markerHeight="7" orient="auto-start-reverse">
       <polygon points="0 0, 10 3.5, 0 7" fill="#64748b"/>
@@ -6,17 +6,20 @@
     <marker id="arrow-blue" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="10" markerHeight="7" orient="auto-start-reverse">
       <polygon points="0 0, 10 3.5, 0 7" fill="#3b82f6"/>
     </marker>
+    <marker id="arrow-pink" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="10" markerHeight="7" orient="auto-start-reverse">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#ec4899"/>
+    </marker>
     <filter id="shadow" x="-2%" y="-2%" width="104%" height="104%">
       <feDropShadow dx="1" dy="2" stdDeviation="3" flood-opacity="0.1"/>
     </filter>
   </defs>
 
   <!-- Background -->
-  <rect width="960" height="780" fill="#f8fafc" rx="8"/>
+  <rect width="960" height="800" fill="#f8fafc" rx="8"/>
 
   <!-- Title -->
   <text x="480" y="36" text-anchor="middle" font-size="20" font-weight="700" fill="#0f172a">HttpMcpServer Architecture</text>
-  <text x="480" y="56" text-anchor="middle" font-size="12" fill="#64748b">ASP.NET Core MCP Server with Auth0 JWT Authentication</text>
+  <text x="480" y="56" text-anchor="middle" font-size="12" fill="#64748b">ASP.NET Core MCP Server — Auth0 JWT + Selective Tool Authorization</text>
 
   <!-- Client Box -->
   <rect x="50" y="90" width="200" height="70" rx="10" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5" filter="url(#shadow)"/>
@@ -26,21 +29,27 @@
   <!-- Arrow: Client -> Server -->
   <line x1="250" y1="125" x2="330" y2="125" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
   <text x="290" y="118" text-anchor="middle" font-size="10" fill="#64748b">HTTP POST</text>
-  <text x="290" y="142" text-anchor="middle" font-size="9" fill="#94a3b8">+ Bearer JWT</text>
+  <text x="290" y="142" text-anchor="middle" font-size="9" fill="#94a3b8">+ Bearer JWT (optional)</text>
+
+  <!-- Auth0 Box -->
+  <rect x="50" y="200" width="200" height="100" rx="10" fill="#fce7f3" stroke="#ec4899" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="150" y="224" text-anchor="middle" font-size="13" font-weight="600" fill="#9d174d">Auth0</text>
+  <text x="150" y="244" text-anchor="middle" font-size="10" fill="#be185d">OAuth 2.0 / OIDC Provider</text>
+  <text x="150" y="262" text-anchor="middle" font-size="9" fill="#be185d">/.well-known/jwks.json</text>
+  <text x="150" y="280" text-anchor="middle" font-size="9" fill="#be185d">Authorization Code + PKCE</text>
+
+  <!-- Arrow: Auth0 JWKS -> Server -->
+  <line x1="250" y1="250" x2="330" y2="200" stroke="#ec4899" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+  <text x="280" y="218" font-size="9" fill="#be185d">JWKS keys</text>
+  <text x="278" y="232" font-size="9" fill="#be185d">(at startup)</text>
+
+  <!-- Arrow: Client -> Auth0 (OAuth) -->
+  <path d="M 150 160 L 150 195" fill="none" stroke="#ec4899" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#arrow-pink)"/>
+  <text x="95" y="180" font-size="9" fill="#be185d">OAuth login</text>
 
   <!-- ASP.NET Core Host Box -->
-  <rect x="330" y="80" width="580" height="620" rx="12" fill="none" stroke="#e2e8f0" stroke-width="1.5" stroke-dasharray="6,3"/>
+  <rect x="330" y="80" width="580" height="640" rx="12" fill="none" stroke="#e2e8f0" stroke-width="1.5" stroke-dasharray="6,3"/>
   <text x="620" y="102" text-anchor="middle" font-size="12" font-weight="600" fill="#475569">ASP.NET Core Host (.NET 10)</text>
-
-  <!-- Auth0 Box (external) -->
-  <rect x="50" y="210" width="200" height="80" rx="10" fill="#fce7f3" stroke="#ec4899" stroke-width="1.5" filter="url(#shadow)"/>
-  <text x="150" y="234" text-anchor="middle" font-size="13" font-weight="600" fill="#9d174d">Auth0</text>
-  <text x="150" y="254" text-anchor="middle" font-size="10" fill="#be185d">OAuth 2.0 / OIDC Provider</text>
-  <text x="150" y="272" text-anchor="middle" font-size="9" fill="#be185d">JWKS / Token Issuer</text>
-
-  <!-- Arrow: Auth0 -> Server (JWKS) -->
-  <line x1="250" y1="250" x2="330" y2="200" stroke="#ec4899" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
-  <text x="280" y="220" font-size="9" fill="#be185d">JWKS keys</text>
 
   <!-- Middleware Stack -->
   <rect x="360" y="115" width="130" height="50" rx="8" fill="#e0f2fe" stroke="#38bdf8" stroke-width="1.2" filter="url(#shadow)"/>
@@ -49,11 +58,11 @@
 
   <rect x="510" y="115" width="130" height="50" rx="8" fill="#fce7f3" stroke="#ec4899" stroke-width="1.2" filter="url(#shadow)"/>
   <text x="575" y="138" text-anchor="middle" font-size="11" font-weight="600" fill="#9d174d">JWT Auth</text>
-  <text x="575" y="153" text-anchor="middle" font-size="9" fill="#be185d">UseAuthentication</text>
+  <text x="575" y="153" text-anchor="middle" font-size="9" fill="#be185d">JWKS + Validation</text>
 
   <rect x="660" y="115" width="130" height="50" rx="8" fill="#ede9fe" stroke="#8b5cf6" stroke-width="1.2" filter="url(#shadow)"/>
   <text x="725" y="138" text-anchor="middle" font-size="11" font-weight="600" fill="#5b21b6">Authorization</text>
-  <text x="725" y="153" text-anchor="middle" font-size="9" fill="#6d28d9">UseAuthorization</text>
+  <text x="725" y="153" text-anchor="middle" font-size="9" fill="#6d28d9">Auth Filters</text>
 
   <!-- Arrow down from middleware -->
   <line x1="530" y1="165" x2="530" y2="195" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
@@ -61,7 +70,7 @@
   <!-- Endpoint Routing -->
   <rect x="370" y="195" width="320" height="50" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5" filter="url(#shadow)"/>
   <text x="530" y="218" text-anchor="middle" font-size="12" font-weight="700" fill="#1e40af">Endpoint Routing</text>
-  <text x="530" y="234" text-anchor="middle" font-size="10" fill="#2563eb">/mcp (auth required)  |  /health (public)</text>
+  <text x="530" y="234" text-anchor="middle" font-size="10" fill="#2563eb">/mcp  |  /health  |  .well-known/oauth-*</text>
 
   <!-- Arrow down to MCP SDK -->
   <line x1="440" y1="245" x2="440" y2="280" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
@@ -70,93 +79,94 @@
   <rect x="350" y="280" width="300" height="100" rx="10" fill="#ede9fe" stroke="#8b5cf6" stroke-width="1.5" filter="url(#shadow)"/>
   <text x="500" y="305" text-anchor="middle" font-size="13" font-weight="700" fill="#5b21b6">ModelContextProtocol SDK v1.4.0</text>
   <line x1="370" y1="315" x2="630" y2="315" stroke="#c4b5fd" stroke-width="1"/>
-  <text x="500" y="335" text-anchor="middle" font-size="10" fill="#6d28d9">AddMcpServer() + WithHttpTransport()</text>
-  <text x="500" y="352" text-anchor="middle" font-size="10" fill="#6d28d9">AddAuthorizationFilters() [Authorize]</text>
+  <text x="500" y="335" text-anchor="middle" font-size="10" fill="#6d28d9">WithHttpTransport() + AddAuthorizationFilters()</text>
+  <text x="500" y="352" text-anchor="middle" font-size="10" fill="#6d28d9">AddMcp() — OAuth resource metadata</text>
   <text x="500" y="369" text-anchor="middle" font-size="10" fill="#6d28d9">Protocol Version: 2024-11-05</text>
 
   <!-- Arrow down to Tools -->
   <line x1="500" y1="380" x2="500" y2="410" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
 
   <!-- Tools Container -->
-  <rect x="350" y="410" width="540" height="210" rx="10" fill="#f0fdf4" stroke="#86efac" stroke-width="1.5" filter="url(#shadow)"/>
-  <text x="620" y="432" text-anchor="middle" font-size="12" font-weight="700" fill="#166534">MCP Tools (JWT Protected)</text>
+  <rect x="350" y="410" width="540" height="230" rx="10" fill="#f0fdf4" stroke="#86efac" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="620" y="432" text-anchor="middle" font-size="12" font-weight="700" fill="#166534">MCP Tools</text>
 
-  <!-- WeatherTools -->
-  <rect x="370" y="445" width="240" height="75" rx="8" fill="#dcfce7" stroke="#22c55e" stroke-width="1.2"/>
-  <text x="490" y="466" text-anchor="middle" font-size="11" font-weight="600" fill="#15803d">WeatherTools</text>
-  <text x="390" y="486" font-size="10" fill="#166534">get_weather(city, units?)</text>
-  <text x="390" y="504" font-size="10" fill="#166534">get_forecast(city)</text>
-  <rect x="530" y="453" width="60" height="18" rx="4" fill="#bbf7d0" stroke="#86efac" stroke-width="0.8"/>
-  <text x="560" y="466" text-anchor="middle" font-size="9" fill="#166534">static</text>
+  <!-- Public label -->
+  <rect x="365" y="438" width="50" height="16" rx="4" fill="#bbf7d0" stroke="#86efac" stroke-width="0.8"/>
+  <text x="390" y="450" text-anchor="middle" font-size="9" font-weight="600" fill="#166534">Public</text>
 
-  <!-- CalculatorTools -->
-  <rect x="630" y="445" width="240" height="75" rx="8" fill="#dcfce7" stroke="#22c55e" stroke-width="1.2"/>
-  <text x="750" y="466" text-anchor="middle" font-size="11" font-weight="600" fill="#15803d">CalculatorTools</text>
-  <text x="650" y="486" font-size="10" fill="#166534">calculate(expression)</text>
-  <text x="650" y="504" font-size="10" fill="#166534">convert_units(val, from, to)</text>
-  <rect x="790" y="453" width="60" height="18" rx="4" fill="#bbf7d0" stroke="#86efac" stroke-width="0.8"/>
-  <text x="820" y="466" text-anchor="middle" font-size="9" fill="#166534">static</text>
+  <!-- Protected label -->
+  <rect x="635" y="438" width="65" height="16" rx="4" fill="#fef08a" stroke="#eab308" stroke-width="0.8"/>
+  <text x="667" y="450" text-anchor="middle" font-size="9" font-weight="600" fill="#854d0e">Protected</text>
 
-  <!-- TimeTools -->
-  <rect x="370" y="535" width="240" height="75" rx="8" fill="#dcfce7" stroke="#22c55e" stroke-width="1.2"/>
-  <text x="490" y="556" text-anchor="middle" font-size="11" font-weight="600" fill="#15803d">TimeTools</text>
-  <text x="390" y="576" font-size="10" fill="#166534">get_current_time(timezone?)</text>
-  <text x="390" y="594" font-size="10" fill="#166534">list_timezones(search?)</text>
-  <rect x="530" y="543" width="60" height="18" rx="4" fill="#bbf7d0" stroke="#86efac" stroke-width="0.8"/>
-  <text x="560" y="556" text-anchor="middle" font-size="9" fill="#166534">static</text>
+  <!-- WeatherTools (public) -->
+  <rect x="370" y="460" width="240" height="75" rx="8" fill="#dcfce7" stroke="#22c55e" stroke-width="1.2"/>
+  <text x="490" y="481" text-anchor="middle" font-size="11" font-weight="600" fill="#15803d">WeatherTools</text>
+  <text x="390" y="501" font-size="10" fill="#166534">get_weather(city, units?)</text>
+  <text x="390" y="519" font-size="10" fill="#166534">get_forecast(city)</text>
+  <rect x="530" y="468" width="60" height="18" rx="4" fill="#bbf7d0" stroke="#86efac" stroke-width="0.8"/>
+  <text x="560" y="481" text-anchor="middle" font-size="9" fill="#166534">static</text>
 
-  <!-- DatabaseTools -->
-  <rect x="630" y="535" width="240" height="75" rx="8" fill="#fef9c3" stroke="#eab308" stroke-width="1.2"/>
-  <text x="750" y="556" text-anchor="middle" font-size="11" font-weight="600" fill="#854d0e">DatabaseTools</text>
-  <text x="650" y="576" font-size="10" fill="#713f12">search_documents(query, limit?)</text>
-  <text x="650" y="594" font-size="10" fill="#713f12">ILogger + IConfiguration (DI)</text>
-  <rect x="790" y="543" width="60" height="18" rx="4" fill="#fef08a" stroke="#eab308" stroke-width="0.8"/>
-  <text x="820" y="556" text-anchor="middle" font-size="9" fill="#854d0e">DI</text>
+  <!-- CalculatorTools (public) -->
+  <rect x="630" y="460" width="240" height="75" rx="8" fill="#dcfce7" stroke="#22c55e" stroke-width="1.2"/>
+  <text x="750" y="481" text-anchor="middle" font-size="11" font-weight="600" fill="#15803d">CalculatorTools</text>
+  <text x="650" y="501" font-size="10" fill="#166534">calculate(expression)</text>
+  <text x="650" y="519" font-size="10" fill="#166534">convert_units(val, from, to)</text>
+  <rect x="790" y="468" width="60" height="18" rx="4" fill="#bbf7d0" stroke="#86efac" stroke-width="0.8"/>
+  <text x="820" y="481" text-anchor="middle" font-size="9" fill="#166534">static</text>
+
+  <!-- TimeTools (public) -->
+  <rect x="370" y="550" width="240" height="75" rx="8" fill="#dcfce7" stroke="#22c55e" stroke-width="1.2"/>
+  <text x="490" y="571" text-anchor="middle" font-size="11" font-weight="600" fill="#15803d">TimeTools</text>
+  <text x="390" y="591" font-size="10" fill="#166534">get_current_time(timezone?)</text>
+  <text x="390" y="609" font-size="10" fill="#166534">list_timezones(search?)</text>
+  <rect x="530" y="558" width="60" height="18" rx="4" fill="#bbf7d0" stroke="#86efac" stroke-width="0.8"/>
+  <text x="560" y="571" text-anchor="middle" font-size="9" fill="#166534">static</text>
+
+  <!-- DatabaseTools (protected) -->
+  <rect x="630" y="550" width="240" height="75" rx="8" fill="#fef2f2" stroke="#ef4444" stroke-width="1.5"/>
+  <text x="750" y="571" text-anchor="middle" font-size="11" font-weight="600" fill="#991b1b">DatabaseTools</text>
+  <text x="650" y="591" font-size="10" fill="#991b1b">search_documents(query, limit?)</text>
+  <text x="650" y="609" font-size="10" fill="#b91c1c">[Authorize] — JWT required</text>
+  <rect x="790" y="558" width="60" height="18" rx="4" fill="#fecaca" stroke="#ef4444" stroke-width="0.8"/>
+  <text x="820" y="571" text-anchor="middle" font-size="9" fill="#991b1b">DI</text>
 
   <!-- Health Check -->
-  <rect x="740" y="195" width="150" height="50" rx="8" fill="#fce7f3" stroke="#ec4899" stroke-width="1.2" filter="url(#shadow)"/>
-  <text x="815" y="218" text-anchor="middle" font-size="11" font-weight="600" fill="#9d174d">Health Check</text>
-  <text x="815" y="234" text-anchor="middle" font-size="10" fill="#be185d">/health (public)</text>
+  <rect x="740" y="195" width="150" height="50" rx="8" fill="#e0f2fe" stroke="#38bdf8" stroke-width="1.2" filter="url(#shadow)"/>
+  <text x="815" y="218" text-anchor="middle" font-size="11" font-weight="600" fill="#0369a1">Health Check</text>
+  <text x="815" y="234" text-anchor="middle" font-size="10" fill="#0284c7">/health (public)</text>
   <line x1="690" y1="220" x2="740" y2="220" stroke="#64748b" stroke-width="1" marker-end="url(#arrow)"/>
 
-  <!-- DI Container -->
-  <rect x="50" y="340" width="200" height="130" rx="10" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.2" filter="url(#shadow)"/>
-  <text x="150" y="364" text-anchor="middle" font-size="12" font-weight="600" fill="#334155">DI Container</text>
-  <line x1="70" y1="373" x2="230" y2="373" stroke="#cbd5e1" stroke-width="1"/>
-  <text x="75" y="392" font-size="10" fill="#475569">ILogger&lt;T&gt;</text>
-  <text x="75" y="410" font-size="10" fill="#475569">IConfiguration</text>
-  <text x="75" y="428" font-size="10" fill="#475569">McpServer (SDK)</text>
-  <text x="75" y="446" font-size="10" fill="#475569">JwtBearerHandler</text>
-  <text x="75" y="464" font-size="10" fill="#475569">HealthCheckService</text>
-
   <!-- Auth Flow Legend -->
-  <rect x="50" y="520" width="200" height="110" rx="10" fill="#fef2f2" stroke="#fca5a5" stroke-width="1.2" filter="url(#shadow)"/>
-  <text x="150" y="544" text-anchor="middle" font-size="11" font-weight="600" fill="#991b1b">Auth Flow</text>
-  <line x1="70" y1="553" x2="230" y2="553" stroke="#fca5a5" stroke-width="1"/>
-  <text x="75" y="572" font-size="9" fill="#991b1b">1. Client gets JWT from Auth0</text>
-  <text x="75" y="588" font-size="9" fill="#991b1b">2. Sends Bearer token in</text>
-  <text x="80" y="602" font-size="9" fill="#991b1b">   Authorization header</text>
-  <text x="75" y="618" font-size="9" fill="#991b1b">3. Server validates JWT</text>
+  <rect x="50" y="350" width="200" height="130" rx="10" fill="#fef2f2" stroke="#fca5a5" stroke-width="1.2" filter="url(#shadow)"/>
+  <text x="150" y="374" text-anchor="middle" font-size="11" font-weight="600" fill="#991b1b">Auth Flow</text>
+  <line x1="70" y1="383" x2="230" y2="383" stroke="#fca5a5" stroke-width="1"/>
+  <text x="75" y="402" font-size="9" fill="#991b1b">1. Client gets JWT from Auth0</text>
+  <text x="75" y="420" font-size="9" fill="#991b1b">2. Sends Bearer in Authorization</text>
+  <text x="75" y="438" font-size="9" fill="#991b1b">3. Server validates via JWKS</text>
+  <text x="75" y="456" font-size="9" fill="#991b1b">4. [Authorize] tools: hidden</text>
+  <text x="85" y="470" font-size="9" fill="#991b1b">without valid token</text>
+
+  <!-- OAuth Discovery -->
+  <rect x="50" y="510" width="200" height="70" rx="10" fill="#ede9fe" stroke="#8b5cf6" stroke-width="1.2" filter="url(#shadow)"/>
+  <text x="150" y="534" text-anchor="middle" font-size="11" font-weight="600" fill="#5b21b6">OAuth Auto-Discovery</text>
+  <text x="75" y="554" font-size="9" fill="#6d28d9">/.well-known/</text>
+  <text x="75" y="568" font-size="9" fill="#6d28d9">oauth-protected-resource</text>
 
   <!-- Legend -->
-  <rect x="50" y="660" width="860" height="100" rx="8" fill="#f1f5f9" stroke="#e2e8f0" stroke-width="1"/>
-  <text x="70" y="682" font-size="11" font-weight="600" fill="#334155">Legend:</text>
-  <rect x="130" y="670" width="14" height="14" rx="3" fill="#e0f2fe" stroke="#38bdf8"/>
-  <text x="150" y="682" font-size="10" fill="#475569">Middleware</text>
-  <rect x="220" y="670" width="14" height="14" rx="3" fill="#fce7f3" stroke="#ec4899"/>
-  <text x="240" y="682" font-size="10" fill="#475569">Auth</text>
-  <rect x="280" y="670" width="14" height="14" rx="3" fill="#ede9fe" stroke="#8b5cf6"/>
-  <text x="300" y="682" font-size="10" fill="#475569">MCP SDK</text>
-  <rect x="370" y="670" width="14" height="14" rx="3" fill="#dcfce7" stroke="#22c55e"/>
-  <text x="390" y="682" font-size="10" fill="#475569">Static Tool</text>
-  <rect x="470" y="670" width="14" height="14" rx="3" fill="#fef9c3" stroke="#eab308"/>
-  <text x="490" y="682" font-size="10" fill="#475569">DI Tool</text>
-  <line x1="550" y1="677" x2="590" y2="677" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
-  <text x="600" y="682" font-size="10" fill="#475569">Data Flow</text>
-  <line x1="670" y1="677" x2="710" y2="677" stroke="#ec4899" stroke-width="1.2" stroke-dasharray="4,3"/>
-  <text x="720" y="682" font-size="10" fill="#475569">JWKS Fetch</text>
+  <rect x="50" y="680" width="860" height="100" rx="8" fill="#f1f5f9" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="70" y="702" font-size="11" font-weight="600" fill="#334155">Legend:</text>
+  <rect x="130" y="690" width="14" height="14" rx="3" fill="#dcfce7" stroke="#22c55e"/>
+  <text x="150" y="702" font-size="10" fill="#475569">Public Tool</text>
+  <rect x="230" y="690" width="14" height="14" rx="3" fill="#fef2f2" stroke="#ef4444"/>
+  <text x="250" y="702" font-size="10" fill="#475569">Protected Tool</text>
+  <rect x="350" y="690" width="14" height="14" rx="3" fill="#fce7f3" stroke="#ec4899"/>
+  <text x="370" y="702" font-size="10" fill="#475569">Auth0</text>
+  <rect x="420" y="690" width="14" height="14" rx="3" fill="#ede9fe" stroke="#8b5cf6"/>
+  <text x="440" y="702" font-size="10" fill="#475569">MCP SDK / OAuth</text>
+  <line x1="550" y1="697" x2="590" y2="697" stroke="#ec4899" stroke-width="1.2" stroke-dasharray="4,3"/>
+  <text x="600" y="702" font-size="10" fill="#475569">JWKS / OAuth</text>
 
-  <text x="70" y="710" font-size="9" fill="#94a3b8">Transport: StreamableHttp | Port: 5000 (http) / 5001 (https) | Auth: Auth0 JWT Bearer</text>
-  <text x="70" y="726" font-size="9" fill="#94a3b8">JWKS loaded at startup | Issuer + Audience + Lifetime validation | Signing keys: RS256</text>
-  <text x="70" y="742" font-size="9" fill="#94a3b8">Health endpoint: public (no auth) | MCP endpoint: RequireAuthorization() + [Authorize] on all tools</text>
+  <text x="70" y="730" font-size="9" fill="#94a3b8">Transport: StreamableHttp | Port: 5000 | Auth: Auth0 JWT Bearer (RS256) | JWKS loaded at startup</text>
+  <text x="70" y="746" font-size="9" fill="#94a3b8">Authorization: AddAuthorizationFilters() — [AllowAnonymous] for public tools, [Authorize] hides protected tools from unauthenticated users</text>
+  <text x="70" y="762" font-size="9" fill="#94a3b8">OAuth Discovery: /.well-known/oauth-protected-resource — MCP clients auto-discover Auth0 and initiate Authorization Code + PKCE flow</text>
 </svg>

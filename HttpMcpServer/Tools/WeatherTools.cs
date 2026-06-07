@@ -8,7 +8,7 @@ namespace HttpMcpServer.Tools
     {
         [McpServerTool(Name = "get_weather")]
         [Description("Get current weather for a city")]
-        [Authorize]
+        [AllowAnonymous]
         public static Task<string> GetWeather(
             [Description("City name")] string city,
             [Description("Temperature units (celsius/fahrenheit)")] string units = "celsius")
@@ -26,7 +26,7 @@ namespace HttpMcpServer.Tools
 
         [McpServerTool(Name = "get_forecast")]
         [Description("Get 3-day weather forecast for a city")]
-        [Authorize]
+        [AllowAnonymous]
         public static Task<string> GetForecast(
         [Description("City name")] string city)
         {

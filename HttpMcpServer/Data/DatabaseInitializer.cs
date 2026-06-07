@@ -9,8 +9,9 @@ public static class DatabaseInitializer
         var connectionString = configuration.GetConnectionString("DefaultConnection")
             ?? "Data Source=data/mcp.db";
 
-        // 确保数据目录存在
-        var dbPath = connectionString.Replace("Data Source=", "").Trim();
+        // 使用 SqliteConnectionStringBuilder 安全解析连接字符串
+        var csBuilder = new Microsoft.Data.Sqlite.SqliteConnectionStringBuilder(connectionString);
+        var dbPath = csBuilder.DataSource;
         var dir = Path.GetDirectoryName(dbPath);
         if (!string.IsNullOrEmpty(dir))
             Directory.CreateDirectory(dir);

@@ -74,7 +74,7 @@ namespace HttpMcpServer.Tools
             var offset = (Math.Max(page, 1) - 1) * pageSize;
 
             var sql = """
-                SELECT Id, Title, Category, UpdatedAt
+                SELECT Id, Title, Category, UpdatedAt, COUNT(*) OVER() AS TotalCount
                 FROM documents
                 ORDER BY UpdatedAt DESC
                 LIMIT @PageSize OFFSET @Offset
@@ -83,8 +83,7 @@ namespace HttpMcpServer.Tools
             var rows = await _db.QueryAsync(sql, new { PageSize = pageSize, Offset = offset });
             var docs = rows.Select(r => (dynamic)r).ToList();
 
-            var totalSql = "SELECT COUNT(*) FROM documents";
-            var total = await _db.ExecuteScalarAsync<int>(totalSql);
+            var total = docs.Count > 0 ? (int)docs[0].TotalCount : 0;
             var totalPages = (int)Math.Ceiling((double)total / pageSize);
 
             var lines = docs.Select((d, i) =>
@@ -114,14 +113,25 @@ namespace HttpMcpServer.Tools
         }
 
         [McpServerTool(Name = "update_document")]
-        [Description("Update an existing document")]
+        [Description("Update an existing document. Only provided fields will be changed.")]
         [Authorize]
         public async Task<string> UpdateDocument(
             [Description("Document ID")] int id,
-            [Description("New title")] string title,
-            [Description("New content")] string content,
-            [Description("New category")] string category)
+            [Description("New title (null to keep current)")] string? title = null,
+            [Description("New content (null to keep current)")] string? content = null,
+            [Description("New category (null to keep current)")] string? category = null)
         {
+            // 先获取当前文档
+            var current = await _db.QueryFirstOrDefaultAsync(
+                "SELECT Title, Content, Category FROM documents WHERE Id = @Id", new { Id = id });
+            if (current == null)
+                return $"Document with ID {id} not found.";
+
+            var d = (dynamic)current;
+            var finalTitle = title ?? (string)d.Title;
+            var finalContent = content ?? (string)d.Content;
+            var finalCategory = category ?? (string)d.Category;
+
             var sql = """
                 UPDATE documents
                 SET Title = @Title, Content = @Content, Category = @Category, UpdatedAt = datetime('now')
@@ -129,10 +139,8 @@ namespace HttpMcpServer.Tools
                 SELECT changes();
                 """;
 
-            var affected = await _db.ExecuteScalarAsync<int>(sql, new { Id = id, Title = title, Content = content, Category = category });
-
-            if (affected == 0)
-                return $"Document with ID {id} not found.";
+            var affected = await _db.ExecuteScalarAsync<int>(sql,
+                new { Id = id, Title = finalTitle, Content = finalContent, Category = finalCategory });
 
             _logger.LogInformation("Updated document ID: {Id}", id);
             return $"Document {id} updated successfully.";

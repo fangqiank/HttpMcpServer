@@ -137,7 +137,7 @@ curl --request POST \
 | `get_document` | `id` | Get a specific document by ID |
 | `list_documents` | `page?`, `pageSize?` | List documents with pagination |
 | `create_document` | `title`, `content`, `category?` | Create a new document |
-| `update_document` | `id`, `title`, `content`, `category` | Update an existing document |
+| `update_document` | `id`, `title?`, `content?`, `category?` | Update document (only provided fields) |
 | `delete_document` | `id` | Delete a document by ID |
 | `count_documents` | -- | Get total document count by category |
 

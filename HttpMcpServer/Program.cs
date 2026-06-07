@@ -59,10 +59,15 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
-// SQLite 数据库
+// SQLite 数据库（Scoped 生命周期，MCP 单请求内串行调用工具方法，无并发风险）
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? "Data Source=data/mcp.db";
-builder.Services.AddScoped<IDbConnection>(_ => new Microsoft.Data.Sqlite.SqliteConnection(connectionString));
+builder.Services.AddScoped<IDbConnection>(_ =>
+{
+    var conn = new Microsoft.Data.Sqlite.SqliteConnection(connectionString);
+    conn.Open();
+    return conn;
+});
 
 // MCP 服务器服务
 builder.Services

@@ -59,6 +59,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
+// HttpClient for weather API (Open-Meteo, free, no API key needed)
+builder.Services.AddHttpClient<WeatherTools>();
+
 // SQLite 数据库（Scoped 生命周期，MCP 单请求内串行调用工具方法，无并发风险）
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? "Data Source=data/mcp.db";

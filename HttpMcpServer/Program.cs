@@ -1,7 +1,9 @@
 using HttpMcpServer.Tools;
+using HttpMcpServer.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using ModelContextProtocol.Authentication;
+using System.Data;
 using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -57,6 +59,11 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
+// SQLite 数据库
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? "Data Source=data/mcp.db";
+builder.Services.AddScoped<IDbConnection>(_ => new Microsoft.Data.Sqlite.SqliteConnection(connectionString));
+
 // MCP 服务器服务
 builder.Services
     .AddMcpServer(options =>
@@ -93,6 +100,9 @@ builder.Services.AddCors(options =>
 builder.Services.AddHealthChecks();
 
 var app = builder.Build();
+
+// 初始化数据库（建表 + 种子数据）
+await DatabaseInitializer.Initialize(app.Configuration);
 
 var logger = app.Services.GetRequiredService<ILogger<Program>>();
 

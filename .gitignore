@@ -11,6 +11,9 @@ obj/
 CLAUDE.md
 .claude/
 
+## Runtime data
+*.db
+
 ## IDE
 .vs/
 .vscode/

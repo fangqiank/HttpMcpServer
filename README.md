@@ -1,8 +1,8 @@
 # HttpMcpServer
 
-ASP.NET Core MCP (Model Context Protocol) 服务器 — 通过 StreamableHttp 传输协议暴露 AI 工具调用能力，使用 Auth0 JWT 保护敏感工具，支持 MCP OAuth 自动发现。
+ASP.NET Core MCP (Model Context Protocol) 服务器 -- 通过 StreamableHttp 传输协议暴露 12 个 AI 工具调用能力，使用 Auth0 JWT 保护敏感工具，支持 MCP OAuth 自动发现，内置 SQLite 文档数据库。
 
-An ASP.NET Core MCP server with Auth0 JWT selective tool authorization and MCP OAuth auto-discovery.
+An ASP.NET Core MCP server exposing 12 tools via StreamableHttp transport, with Auth0 JWT selective tool authorization, MCP OAuth auto-discovery, and a built-in SQLite document store.
 
 ![Architecture](HttpMcpServer-architecture.svg)
 
@@ -15,17 +15,20 @@ An ASP.NET Core MCP server with Auth0 JWT selective tool authorization and MCP O
 | ModelContextProtocol | 1.4.0 | MCP SDK (core types) |
 | ModelContextProtocol.AspNetCore | 1.4.0 | MCP HTTP transport + auth filters |
 | Microsoft.AspNetCore.Authentication.JwtBearer | 10.x | JWT Bearer authentication |
-| Auth0 | — | OAuth 2.0 / OIDC identity provider |
+| Dapper | 2.x | Lightweight ORM for SQLite |
+| Microsoft.Data.Sqlite | 10.x | SQLite ADO.NET provider |
+| Auth0 | -- | OAuth 2.0 / OIDC identity provider |
 
 ## Modules
 
 | Module | File | Auth | Responsibility |
 |---|---|---|---|
-| Host | `Program.cs` | — | Auth0 JWT + JWKS, MCP server DI, OAuth metadata, middleware |
-| WeatherTools | `Tools/WeatherTools.cs` | Public | Simulated weather data |
+| Host | `Program.cs` | -- | Auth0 JWT + JWKS, MCP server DI, OAuth metadata, middleware pipeline |
+| DatabaseInitializer | `Data/DatabaseInitializer.cs` | -- | SQLite schema creation + seed data |
+| WeatherTools | `Tools/WeatherTools.cs` | Public | Simulated weather & forecast data |
 | CalculatorTools | `Tools/CalculatorTools.cs` | Public | Math evaluation, unit conversion |
 | TimeTools | `Tools/TimeTools.cs` | Public | Timezone-aware time queries |
-| DatabaseTools | `Tools/DatabaseTools.cs` | **JWT Required** | Document search (DI-injected) |
+| DatabaseTools | `Tools/DatabaseTools.cs` | **JWT Required** | Document CRUD + search (DI-injected, Dapper) |
 
 ## Authorization Model
 
@@ -39,9 +42,9 @@ MCP SDK `AddAuthorizationFilters()` provides per-tool access control:
 ```
 No Token:              tools/list → get_weather, get_forecast, calculate,
                                    convert_units, get_current_time, list_timezones
-                       (search_documents is hidden)
+                       (7 document tools are hidden)
 
-With valid JWT:        tools/list → all 7 tools available
+With valid JWT:        tools/list → all 12 tools available
 ```
 
 ## OAuth Auto-Discovery
@@ -64,9 +67,11 @@ The server exposes `/.well-known/oauth-protected-resource` for MCP-native OAuth 
 # Restore and build
 dotnet build HttpMcpServer/HttpMcpServer.csproj
 
-# Run (defaults to http://localhost:5000)
+# Run (defaults to http://localhost:5034)
 dotnet run --project HttpMcpServer/HttpMcpServer.csproj
 ```
+
+The server auto-creates `data/mcp.db` with 10 seed documents on first run.
 
 ## Configuration
 
@@ -113,22 +118,35 @@ curl --request POST \
 
 ## MCP Tools
 
-| Tool | Auth | Parameters | Description |
-|---|---|---|---|
-| `get_weather` | Public | `city`, `units?` | Get current weather |
-| `get_forecast` | Public | `city` | Get 3-day forecast |
-| `calculate` | Public | `expression` | Evaluate math expression |
-| `convert_units` | Public | `value`, `from`, `to` | Unit conversion |
-| `get_current_time` | Public | `timezone?` | Get time for timezone |
-| `list_timezones` | Public | `search?` | List available timezones |
-| `search_documents` | **JWT** | `query`, `limit?` | Search document database |
+### Public Tools (no authentication required)
+
+| Tool | Parameters | Description |
+|---|---|---|
+| `get_weather` | `city`, `units?` | Get current weather for a city |
+| `get_forecast` | `city` | Get 3-day weather forecast |
+| `calculate` | `expression` | Evaluate math expression |
+| `convert_units` | `value`, `from`, `to` | Unit conversion (km/mi, kg/lb, C/F) |
+| `get_current_time` | `timezone?` | Get time for a timezone |
+| `list_timezones` | `search?` | List available timezones |
+
+### Protected Tools (valid Auth0 JWT required)
+
+| Tool | Parameters | Description |
+|---|---|---|
+| `search_documents` | `query`, `limit?` | Search documents by keyword |
+| `get_document` | `id` | Get a specific document by ID |
+| `list_documents` | `page?`, `pageSize?` | List documents with pagination |
+| `create_document` | `title`, `content`, `category?` | Create a new document |
+| `update_document` | `id`, `title`, `content`, `category` | Update an existing document |
+| `delete_document` | `id` | Delete a document by ID |
+| `count_documents` | -- | Get total document count by category |
 
 ## Client Configuration
 
 ### MCP Inspector
 
 1. Transport: `Streamable HTTP`
-2. URL: `http://localhost:5000/mcp`
+2. URL: `http://localhost:5034/mcp`
 3. For protected tools: Add header `Authorization: Bearer <token>`
 
 ### Claude Desktop (via mcp-remote)
@@ -138,7 +156,7 @@ curl --request POST \
   "mcpServers": {
     "http-tools-server": {
       "command": "npx",
-      "args": ["-y", "mcp-remote", "http://localhost:5000/mcp"]
+      "args": ["-y", "mcp-remote", "http://localhost:5034/mcp"]
     }
   }
 }
@@ -147,14 +165,14 @@ curl --request POST \
 ### Claude Code CLI
 
 ```bash
-claude mcp add http-tools-server --transport streamable-http http://localhost:5000/mcp
+claude mcp add http-tools-server --transport streamable-http http://localhost:5034/mcp
 ```
 
 ## Example Request
 
 ```bash
 # Public tool - no token needed
-curl -X POST http://localhost:5000/mcp \
+curl -X POST http://localhost:5034/mcp \
   -H "Content-Type: application/json" \
   -d '{
     "jsonrpc": "2.0", "id": "1",
@@ -163,12 +181,22 @@ curl -X POST http://localhost:5000/mcp \
   }'
 
 # Protected tool - token required
-curl -X POST http://localhost:5000/mcp \
+curl -X POST http://localhost:5034/mcp \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <your-access-token>" \
   -d '{
     "jsonrpc": "2.0", "id": "2",
     "method": "tools/call",
     "params": { "name": "search_documents", "arguments": { "query": "MCP protocol" } }
+  }'
+
+# Create a document
+curl -X POST http://localhost:5034/mcp \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <your-access-token>" \
+  -d '{
+    "jsonrpc": "2.0", "id": "3",
+    "method": "tools/call",
+    "params": { "name": "create_document", "arguments": { "title": "My Doc", "content": "Hello world", "category": "Notes" } }
   }'
 ```

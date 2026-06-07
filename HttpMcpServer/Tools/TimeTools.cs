@@ -5,24 +5,57 @@ using ModelContextProtocol.Server;
 
 namespace HttpMcpServer.Tools
 {
+    /// <summary>
+    /// 常用时区列表，MCP 客户端会展示为下拉选择
+    /// </summary>
+    public enum TimezoneId
+    {
+        [Description("UTC")] UTC,
+        [Description("America/New_York")] New_York,
+        [Description("America/Chicago")] Chicago,
+        [Description("America/Denver")] Denver,
+        [Description("America/Los_Angeles")] Los_Angeles,
+        [Description("America/Sao_Paulo")] Sao_Paulo,
+        [Description("Europe/London")] London,
+        [Description("Europe/Paris")] Paris,
+        [Description("Europe/Berlin")] Berlin,
+        [Description("Europe/Moscow")] Moscow,
+        [Description("Africa/Cairo")] Cairo,
+        [Description("Asia/Dubai")] Dubai,
+        [Description("Asia/Kolkata")] Kolkata,
+        [Description("Asia/Bangkok")] Bangkok,
+        [Description("Asia/Shanghai")] Shanghai,
+        [Description("Asia/Hong_Kong")] Hong_Kong,
+        [Description("Asia/Tokyo")] Tokyo,
+        [Description("Asia/Seoul")] Seoul,
+        [Description("Australia/Sydney")] Sydney,
+        [Description("Pacific/Auckland")] Auckland,
+    }
+
     public class TimeTools
     {
         [McpServerTool(Name = "get_current_time")]
-        [Description("Get the current time for a timezone (supports IANA like 'Asia/Shanghai' and Windows format)")]
+        [Description("Get the current time for a timezone")]
         [AllowAnonymous]
         public static Task<string> GetCurrentTime(
-            [Description("Timezone ID (IANA: 'Asia/Shanghai', 'America/New_York' or Windows: 'Pacific Standard Time')")]
-            string timezone = "UTC")
+            [Description("Select a timezone")] TimezoneId timezone = TimezoneId.UTC)
         {
+            // 从枚举的 Description 特性获取 IANA 时区 ID
+            var timezoneId = timezone.GetType()
+                .GetField(timezone.ToString())?
+                .GetCustomAttributes(typeof(DescriptionAttribute), false)
+                .Cast<DescriptionAttribute>()
+                .FirstOrDefault()?.Description ?? timezone.ToString();
+
             TimeZoneInfo tzInfo;
             try
             {
-                tzInfo = TimeZoneInfo.FindSystemTimeZoneById(timezone);
+                tzInfo = TimeZoneInfo.FindSystemTimeZoneById(timezoneId);
             }
-            catch (TimeZoneNotFoundException)
+            catch (Exception ex) when (ex is TimeZoneNotFoundException or InvalidTimeZoneException)
             {
                 throw new McpException(
-                    $"Timezone '{timezone}' not found. Use list_timezones to see available IDs.");
+                    $"Timezone '{timezoneId}' not found. Use list_timezones to see available IDs.");
             }
 
             var time = TimeZoneInfo.ConvertTime(DateTime.UtcNow, tzInfo);
@@ -50,7 +83,6 @@ namespace HttpMcpServer.Tools
                     if (string.IsNullOrEmpty(search))
                         return true;
 
-                    // 在 Windows ID、显示名、IANA ID 中搜索
                     if (tz.Id.Contains(search, StringComparison.OrdinalIgnoreCase))
                         return true;
                     if (tz.DisplayName.Contains(search, StringComparison.OrdinalIgnoreCase))

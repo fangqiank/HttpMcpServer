@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel;
 using System.Data;
+using Microsoft.AspNetCore.Authorization;
 using ModelContextProtocol;
 using ModelContextProtocol.Server;
 
@@ -9,6 +10,7 @@ namespace HttpMcpServer.Tools
     {
         [McpServerTool(Name = "calculate")]
         [Description("Perform mathematical calculations")]
+        [Authorize]
         public static Task<string> Calculate(
         [Description("Mathematical expression to evaluate")] string expression)
         {
@@ -26,6 +28,7 @@ namespace HttpMcpServer.Tools
 
         [McpServerTool(Name = "convert_units")]
         [Description("Convert between different units")]
+        [Authorize]
         public static Task<string> ConvertUnits(
             [Description("Value to convert")] double value,
             [Description("Source unit (e.g., km, mi, kg, lb)")] string from,

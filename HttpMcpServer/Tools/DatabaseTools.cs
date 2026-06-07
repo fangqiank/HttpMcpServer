@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
+using Microsoft.AspNetCore.Authorization;
 using ModelContextProtocol.Server;
 
 namespace HttpMcpServer.Tools
@@ -16,6 +17,7 @@ namespace HttpMcpServer.Tools
 
         [McpServerTool(Name = "search_documents")]
         [Description("Search through document database")]
+        [Authorize]
         public async Task<string> SearchDocuments(
             [Description("Search query")] string query,
             [Description("Maximum number of results")] int limit = 5)
@@ -23,7 +25,7 @@ namespace HttpMcpServer.Tools
             _logger.LogInformation("Searching documents for: {Query}", query);
 
             // 模拟数据库搜索
-            await Task.Delay(100); // 模拟异步操作
+            await Task.Delay(100);
 
             var results = new[]
             {

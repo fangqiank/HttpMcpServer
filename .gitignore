@@ -1,0 +1,17 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+*.cache
+*.tmp
+*.Backup.tmp
+
+## Claude
+CLAUDE.md
+.claude/
+
+## IDE
+.vs/
+.vscode/
+.idea/

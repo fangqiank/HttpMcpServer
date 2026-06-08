@@ -18,16 +18,40 @@ namespace HttpMcpServer.Tools
         }
 
         /// <summary>
-        /// 将城市名解析为经纬度（使用 Open-Meteo Geocoding API）
+        /// 将城市名解析为经纬度（使用 Open-Meteo Geocoding API，支持中英文）
         /// </summary>
         private async Task<(double Latitude, double Longitude, string DisplayName)> ResolveCityAsync(string city)
         {
-            var geoUrl = $"https://geocoding-api.open-meteo.com/v1/search?name={Uri.EscapeDataString(city)}&count=1&language=en";
-            var geoJson = await _httpClient.GetStringAsync(geoUrl);
+            city = city.Trim();
+
+            // 先尝试中文（支持中文城市名如"上海"、"合肥"），再尝试英文
+            var result = await TryGeocodeAsync(city, "zh") ?? await TryGeocodeAsync(city, "en");
+
+            if (result == null)
+                throw new McpException($"City '{city}' not found. Try English name like 'Shanghai' or 'Calgary'.");
+
+            return result.Value;
+        }
+
+        private async Task<(double Latitude, double Longitude, string DisplayName)?> TryGeocodeAsync(string city, string language)
+        {
+            var geoUrl = $"https://geocoding-api.open-meteo.com/v1/search?name={Uri.EscapeDataString(city)}&count=1&language={language}";
+
+            string geoJson;
+            try
+            {
+                geoJson = await _httpClient.GetStringAsync(geoUrl);
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "Geocoding API request failed for city: {City}", city);
+                return null;
+            }
+
             using var geoDoc = JsonDocument.Parse(geoJson);
 
             if (!geoDoc.RootElement.TryGetProperty("results", out var results) || results.GetArrayLength() == 0)
-                throw new McpException($"City '{city}' not found. Please check the city name.");
+                return null;
 
             var first = results[0];
             var lat = first.GetProperty("latitude").GetDouble();

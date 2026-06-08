@@ -13,26 +13,26 @@ builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
 });
 
-// Auth0 JWT Bearer 认证
+// Auth0 JWT Bearer 认证（通过 OIDC metadata 自动发现并刷新签名密钥）
 var auth0Domain = builder.Configuration["Auth0:Domain"]
     ?? throw new InvalidOperationException("Auth0:Domain is not configured. Check appsettings.json.");
-var auth0Audience = builder.Configuration["Auth0:Audience"] ?? "";
+var auth0Audience = builder.Configuration["Auth0:Audience"]
+    ?? throw new InvalidOperationException("Auth0:Audience is not configured. Check appsettings.json.");
 
-// 启动时加载 JWKS 签名密钥
-using var jwksClient = new HttpClient();
-var jwksJson = await jwksClient.GetStringAsync($"https://{auth0Domain}/.well-known/jwks.json");
-var jwks = new JsonWebKeySet(jwksJson);
+var auth0Authority = $"https://{auth0Domain.TrimEnd('/')}/";
 
 var validIssuers = new HashSet<string>
 {
-    $"https://{auth0Domain}/",
-    $"https://{auth0Domain}"
+    auth0Authority,
+    auth0Authority.TrimEnd('/')
 };
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
+        options.Authority = auth0Authority;
         options.Audience = auth0Audience;
+
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -40,8 +40,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateAudience = true,
             ValidAudiences = [auth0Audience],
             ValidateLifetime = true,
-            ClockSkew = TimeSpan.FromMinutes(5),
-            IssuerSigningKeys = jwks.GetSigningKeys()
+            ClockSkew = TimeSpan.FromMinutes(5)
         };
     })
     .AddMcp(options =>
@@ -52,7 +51,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         options.ResourceMetadata = new ProtectedResourceMetadata
         {
             Resource = auth0Audience,
-            AuthorizationServers = [$"https://{auth0Domain}"],
+            AuthorizationServers = [auth0Authority.TrimEnd('/')],
             ScopesSupported = ["openid", "profile", "email", "read:data", "write:data"]
         };
     });
